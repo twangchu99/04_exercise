@@ -223,9 +223,9 @@ Tw_favorite_places <- tibble(
   place = c("Macalester College", "Pad Thai", "Groveland Tap",
             "Punch Pizza", "Caribou Coffee", "Indochin",
              "Shish", "MyBurger", "Wells Fargo Bank", "Grandview Theater"),
-  long = c(-93.1712321, -93.1712, -93.1779
+  long = c(-93.1712321, -93.1712, -93.1779,
             -93.1869, -93.0923, -93.1724, 
-            93.1706,-93.1664, -93.0412, -93.1778),
+            -93.1706,-93.1664, -93.0412, -93.1778),
   lat = c(44.9378965, 44.9402, 44.9341,
           44.9203, 44.9487, 44.9399, 
           44.9400, 44.9399, 44.9759, 44.9399),
@@ -233,7 +233,47 @@ Tw_favorite_places <- tibble(
   )
 ```
 
-  
+```{r}
+leaflet(data = Tw_favorite_places) %>% 
+  addTiles() %>% 
+  addCircles(lng = ~long, 
+             lat = ~lat, 
+             label = ~place,
+             weight = 5, 
+             opacity = 1, 
+             color = col2hex("darkblue"))
+```
+
+```{r}
+pal <- colorFactor("magma", 
+                   domain = Tw_favorite_places$`Top 3`)
+
+leaflet(data = Tw_favorite_places) %>% 
+#different map
+  addTiles() %>% 
+  addCircles(lng = ~long, 
+             lat = ~lat, 
+             label = ~place,
+             weight = 5, 
+             opacity = 1, 
+             color = ~pal(`Top 3`)) %>% 
+  addLegend("bottomright", pal = pal, values = ~`Top 3`)
+```
+
+```{r}
+leaflet(data = Tw_favorite_places) %>% 
+  addProviderTiles(providers$Stamen.TonerBackground) %>% 
+  addCircles(lng = ~long, 
+             lat = ~lat, 
+             label = ~place,
+             weight = 5, 
+             opacity = 1, 
+             color = col2hex("darkblue")) %>%
+  addPolylines(lng = ~long, 
+               lat = ~lat, 
+               color = col2hex("darkred"))
+```
+
 ## Revisiting old datasets
 
 This section will revisit some datasets we have used previously and bring in a mapping component. 
@@ -365,21 +405,44 @@ covid19_pop_est_2018 %>%
 
 These exercises use the datasets `MplsStops` and `MplsDemo` from the `carData` library. Search for them in Help to find out more information.
 
+```{r}
+library(carData)
+```
+
+
   14. Use the `MplsStops` dataset to find out how many stops there were for each neighborhood and the proportion of stops that were for a suspicious vehicle or person. Sort the results from most to least number of stops. Save this as a dataset called `mpls_suspicious` and display the table.  
+  
+```{r}
+mn_sus <- MplsStops %>% 
+          group_by(neighborhood) %>% 
+          summarize(n = n(),
+            prop_suspicious = mean(problem == "suspicious")) %>% 
+          arrange(desc(n))
+
+mn_sus %>% 
+  arrange(desc(prop_suspicious))
+```
+
 
 
   15. Use a `leaflet` map and the `MplsStops` dataset to display each of the stops on a map as a small point. Color the points differently depending on whether they were for suspicious vehicle/person or a traffic stop (the `problem` variable). HINTS: use `addCircleMarkers`, set `stroke = FAlSE`, use `colorFactor()` to create a palette.  
   
-  16. Save the folder from moodle called Minneapolis_Neighborhoods into your project/repository folder for this assignment. Make sure the folder is called Minneapolis_Neighborhoods. Use the code below to read in the data and make sure to **delete the `eval=FALSE`**. Although it looks like it only links to the .sph file, you need the entire folder of files to create the `mpls_nbhd` data set. These data contain information about the geometries of the Minneapolis neighborhoods. Using the `mpls_nbhd` dataset as the base file, join the `mpls_suspicious` and `MplsDemo` datasets to it by neighborhood (careful, they are named different things in the different files). Call this new dataset `mpls_all`.
-
-```{r, eval=FALSE}
-mpls_nbhd <- st_read("Minneapolis_Neighborhoods/Minneapolis_Neighborhoods.shp", quiet = TRUE)
+```{r}
+pal <- colorFactor(c("blue", "red"), 
+          domain = c("suspicious", "traffic"))
+  
+leaflet(MplsStops) %>% 
+  addProviderTiles(providers$Stamen.TonerHybrid) %>% 
+  addCircleMarkers(lng = ~long, 
+                   lat = ~lat, 
+                   stroke = FALSE,
+                   radius = 3, 
+                   opacity = .5, 
+                   fillColor = ~pal(problem))
 ```
 
-  17. Use `leaflet` to create a map from the `mpls_all` data  that colors the neighborhoods by `prop_suspicious`. Display the neighborhood name as you scroll over it. Describe what you observe in the map.
   
-  18. Use `leaflet` to create a map of your own choosing. Come up with a question you want to try to answer and use the map to help answer that question. Describe what your map shows. 
-  
+
   
 ## GitHub link
 
